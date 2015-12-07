@@ -1,0 +1,91 @@
+{%
+local f = require("filter")
+%}
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Stats Query</title>
+<style type="text/css">
+<!--
+body {
+	background-color: #FFFFFF;
+	margin-top: 0px;
+}
+body,td,th {
+	color: #000000;
+}
+-->
+</style></head>
+
+<body>
+<table width="1200" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#999999">
+  <tr>
+    <td height="1"></td>
+  </tr>
+</table>
+<form action="{{uri}}" >
+<table width="1200" border="0" align="center" cellpadding="2" cellspacing="2" bordercolor="#FFFFFF" bgcolor="#F1F1F1">
+  <tr>
+    <td width="7%" height="30" nowrap>Server: </td>
+    <td width="36%" nowrap>
+      <select name="server" id="server" style="width:150px;" onchange="return server_on_change(this);">
+        {% for server_name, tables in pairs(servers) do %}
+          <option value="{{server_name}}" tables='{*tables*}' 
+          {% if server_name == server then %}selected="selected"{% end %}
+          >{{server_name}}</option>
+        {% end %}
+      </select>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+     Table: 
+     <select name="table" id="table" style="width:150px;">
+      {*def_tables*}
+     </select>
+   </td>
+    <td width="57%" nowrap>&nbsp;</td>
+  </tr>
+  <tr>
+    <td height="30" nowrap>Date:</td>
+    <td nowrap>
+      <input type="text" name="date" id="date" value="{{date}}"/>
+      &nbsp;&nbsp;&nbsp;&nbsp; <a href="{{prev_uri}}" target="_self">Prev</a> | {{date}} | <a href="{{next_uri}}" target="_self">Next</a> | <a href="{{today_uri}}" target="_self">Today</a>
+    </td>
+    <td nowrap>&nbsp;&nbsp;&nbsp;<input type="submit" name="submit" id="submit" value="Query" /></td>
+  </tr>
+</table>
+</form>
+<table width="1200" border="0" align="center" cellpadding="1" cellspacing="1">
+  <tr>
+    <td width="120" height="25" nowrap="nowrap" bgcolor="#999999">&nbsp;Date</td>
+    <td width="450" nowrap="nowrap" bgcolor="#999999">Stats Key</td>
+    <td width="100" nowrap="nowrap" bgcolor="#999999">requests</td>
+    <td width="125" nowrap="nowrap" bgcolor="#999999">Ok(2xx/3xx)</td>
+    <td width="125" nowrap="nowrap" bgcolor="#999999">Fail(4xx/5xx)</td>
+    <td width="160" nowrap="nowrap" bgcolor="#999999">Avg Response Time</td>
+    <td nowrap="nowrap" bgcolor="#999999">Operate</td>
+  </tr>
+  {% for i, stats in ipairs(stats_list) do 
+  local bgcolor = "#CCCCCC"
+  if i%2==0 then bgcolor="#F1F1F1" end
+  %}
+  <tr>
+    <td height="25" nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;{{stats.date}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}">{{stats.key}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.requests_alt(stats)}}">{{stats.count}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.ok_alt(stats)}}">{{f.ok(stats)}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.fail_alt(stats)}}">{{f.fail(stats)}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.avgtime_alt(stats)}}">{{f.avgtime(stats)}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;</td>
+  </tr>
+  {% end %}
+</table>
+</body>
+</html>
+<script>
+  function server_on_change(sel){
+    var items = sel.options[sel.selectedIndex].getAttribute("tables");
+    document.getElementById('table').innerHTML = items;
+  }
+  {% if errmsg then %}
+    alert("{{errmsg}}");
+  {% end %}
+</script>

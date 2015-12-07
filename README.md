@@ -14,6 +14,7 @@ Table of Contents
     * [add_stats_config](#add_stats_config)
     * [init](#init)
     * [log](#log)
+* [Simple Query] (#simple-query)
 * [Authors](#authors)
 * [Copyright and License](#copyright-and-license)
 
@@ -21,7 +22,7 @@ Synopsis
 ========
 ```lua
     #set ngx_lua's environment variable:
-    lua_package_path '/path/to/lua-resty-stats/lib/?.lua;/path/to/lua-resty-stats/lib/?/init.lua;;';
+    lua_package_path '/path/to/lua-resty-stats/lib/?.lua;/path/to/lua-resty-stats/lib/?/init.lua;/path/to/lua-resty-stats/view/?.lua;;';
     # init the lua-resty-stats
     init_worker_by_lua '
         local stats = require("resty.stats")
@@ -214,6 +215,29 @@ Collect the specified(by stats_name) statistical information at the log phrase.<
 if the `stats_name` is nil, log method will collect all the statistics that have been configured.
 
 [Back to TOC](#table-of-contents)
+
+Simple Query
+=======
+lua-resty-stats comes with a simple query page, which can be used in the following steps:
+* Modify configuration file lua-resty-stats/view/config.lua, add the mongodb configuration
+
+```lua
+_M.servers = {
+	["localnginx"]={host="127.0.0.1", port=27017, dbname="ngx_stats"},
+}
+```
+* add location configuration to nginx.conf
+
+```nginx
+location /stats {
+    set $template_root /path/to/lua-resty-stats/view;
+    content_by_lua_file '/path/to/lua-resty-stats/view/main.lua';
+}
+```
+
+* Access query page. eg. `http://192.168.1.xxx/stats`:
+
+![docs/query-page.png](docs/query-page.png "The Simple Query")
 
 
 Authors
