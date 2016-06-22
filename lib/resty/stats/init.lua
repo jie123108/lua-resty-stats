@@ -49,7 +49,6 @@ local function var_format(format, values)
     if type(format) ~= 'string' then
         return format
     end
-    local variables = {}
 
     local replace = function(m)
         local var = string.sub(m[0], 2)
