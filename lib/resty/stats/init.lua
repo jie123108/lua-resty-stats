@@ -189,6 +189,14 @@ function _M.add_stats_config(stats_name, stats_config)
     stats_configs[stats_name] = stats_config
 end
 
+function _M.get_stats_names()
+    local names = {}
+    for k, _ in pairs(stats_configs) do 
+        table.insert(names, k)
+    end
+    return names
+end
+
 -- add the default stats configs
 function _M.add_def_stats()
     for stats_name, stats_config in pairs(def_stats_configs) do 

@@ -26,24 +26,13 @@ body,td,th {
 <form action="{{uri}}" >
 <table width="1200" border="0" align="center" cellpadding="2" cellspacing="2" bordercolor="#FFFFFF" bgcolor="#F1F1F1">
   <tr>
-    <td width="7%" height="30" nowrap>Server: </td>
-    <td width="36%" nowrap>
-      <select name="server" id="server" style="width:150px;" onchange="return server_on_change(this);">
-        {% for server_name, tables in pairs(servers) do %}
-          <option value="{{server_name}}" tables='{*tables*}' 
-          {% if server_name == server then %}selected="selected"{% end %}
-          >{{server_name}}</option>
-        {% end %}
-      </select>
-      &nbsp;&nbsp;&nbsp;&nbsp;
+    <td width="25%" nowrap>      
+      &nbsp;
      Table: 
      <select name="table" id="table" style="width:150px;">
-      {*def_tables*}
+      {*tables*}
      </select>
-   </td>
-    <td width="57%" nowrap>&nbsp;</td>
-  </tr>
-  <tr>
+     </td>
     <td height="30" nowrap>Date:</td>
     <td nowrap>
       <input type="text" name="date" id="date" value="{{date}}"/>

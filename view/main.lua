@@ -5,9 +5,12 @@ author: jie123108@163.com
 date: 20151206
 ]]
 
-local config = require("config")
 local mongo = require("mongo")
 local template = require "resty.template"
+local cjson = require("cjson")
+local stats = require("resty.stats")
+
+local cache_tmpl = true 
 
 local function create_option(collnames, table_name)
 	local options = {}
@@ -21,19 +24,10 @@ local function create_option(collnames, table_name)
 	return table.concat(options,"\r\n")
 end
 
-local function get_all_servers_info(table)
-	local servers = {}
-	local def_tables = nil
-	for server, mongo_cfg in pairs(config.servers) do 
-		local ok, collnames = mongo.get_all_collections(mongo_cfg)
-		if ok then
-			servers[server] = create_option(collnames, table)
-			if def_tables == nil then
-				def_tables = servers[server]
-			end
-		end
-	end
-	return servers, def_tables
+local function get_all_table_info(table)
+	local collnames = stats.get_stats_names()
+	local options = create_option(collnames, table)
+	return options
 end
 
 local function split(s, delimiter)
@@ -70,11 +64,7 @@ end
 --ngx.req.read_body()
 local args, err = ngx.req.get_uri_args()
 local table = args.table
-local servers, def_tables = get_all_servers_info(table)
-local server = args.server
-if server then
-	def_tables = servers[server]
-end
+local tables = get_all_table_info(table)
 
 local date, prev_day, next_day, today = get_query_date(args)
 
@@ -90,11 +80,8 @@ local today_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
 local stats_list = {}
 local errmsg = nil
 -- query stats
-if server and table and date then
-	local mongo_cfg = config.servers[server]
-	if mongo_cfg == nil then
-		errmsg = "invalid server [" .. server .. "]"
-	end
+if table and date then
+	local mongo_cfg = stats.mongo_cfg
 	local ok, stats = mongo.get_stats(mongo_cfg, table, date)
 	if not ok then
 		ngx.log(ngx.ERR, "mongo.get_stats failed! err:", tostring(stats))
@@ -105,11 +92,14 @@ if server and table and date then
 end
 --ngx.log(ngx.INFO, "query stats:", #stats_list)
 ngx.header["Content-Type"] = 'text/html'
-template.caching(config.cache_tmpl or true)
-template.render("stats.html", {servers=servers, def_tables=def_tables, 
+template.caching(cache_tmpl or true)
+local page_args = {tables=tables, 
 				uri=ngx.var.uri,
-				server=server,table=table,date=date, 
+				table=table,date=date, 
 				prev_uri=prev_uri, next_uri=next_uri, today_uri=today_uri,
-				errmsg=errmsg, stats_list=stats_list})
+				errmsg=errmsg, stats_list=stats_list}
+
+ngx.log(ngx.INFO, "page_args: ", cjson.encode(page_args))
+template.render("stats.html", page_args)
 
 

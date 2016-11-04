@@ -29,29 +29,6 @@ local function conn_put(conn)
 	conn:set_keepalive()
 end
 
-
-local function get_all_collections(mongo_cfg)
-	local ok, conn = conn_get(mongo_cfg)
-	if not ok then
-		return ok, conn
-	end
-	local dbname = mongo_cfg.dbname or "ngx_stats"
-	local db = conn:new_db_handle(dbname)
-	local colls = db:listcollections()
-	local collnames = {}
-	for i, coll in colls:pairs() do 
-		if coll.name then
-			local name = string.sub(coll.name, #dbname + 2)
-			if not string.find(name, "%.") then
-				table.insert(collnames, name)
-			end
-		end
-	end
-	conn_put(conn)
-
-	return true, collnames
-end
-
 local function get_stats(mongo_cfg, collname, date)
 	local ok, conn = conn_get(mongo_cfg)
 	if not ok then
