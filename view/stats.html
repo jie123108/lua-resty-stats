@@ -14,6 +14,13 @@ body {
 body,td,th {
 	color: #000000;
 }
+.fail {
+	background-color: #FF0000;
+	color: #000000;
+}
+.slow {
+	background-color: #FFFF00;
+}
 -->
 </style></head>
 
@@ -55,14 +62,17 @@ body,td,th {
   {% for i, stats in ipairs(stats_list) do 
   local bgcolor = "#CCCCCC"
   if i%2==0 then bgcolor="#F1F1F1" end
+  local ok_count = tonumber(f.ok(stats)) or 0
+  local fail_count = tonumber(f.fail(stats)) or 0
+  local avgtime = f.avgtime(stats) or 0
   %}
   <tr>
     <td height="25" nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;{{stats.date}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}">{{stats.key}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.requests_alt(stats)}}">{{stats.count}}</td>
-    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.ok_alt(stats)}}">{{f.ok(stats)}}</td>
-    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.fail_alt(stats)}}">{{f.fail(stats)}}</td>
-    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.avgtime_alt(stats)}}">{{f.avgtime(stats)}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.ok_alt(stats)}}">{{ok_count}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.fail_alt(stats)}}" {% if fail_count > 1 then %} class="fail" {% end %}>{{fail_count}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.avgtime_alt(stats)}}" {% if tonumber(avgtime) > 0.200 then %} class="slow" {% end %}>{{avgtime}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;</td>
   </tr>
   {% end %}
