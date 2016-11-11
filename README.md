@@ -15,12 +15,13 @@ Table of Contents
     * [init](#init)
     * [log](#log)
 * [Simple Query] (#simple-query)
+* [Simple Demo] (#simple-demo)
 * [Authors](#authors)
 * [Copyright and License](#copyright-and-license)
 
 Synopsis
 ========
-```lua
+```nginx
     #set ngx_lua's environment variable:
     lua_package_path '/path/to/lua-resty-stats/lib/?.lua;/path/to/lua-resty-stats/lib/?/init.lua;/path/to/lua-resty-stats/view/?.lua;;';
     # init the lua-resty-stats
@@ -126,6 +127,16 @@ Synopsis
             echo "cache: miss";
         }
     }
+
+	server {
+	    listen 2000;
+	    server_name localhost;
+	 
+	    location /stats {
+	        set $template_root /path/to/lua-resty-stats/view;
+	        content_by_lua_file '/path/to/lua-resty-stats/view/main.lua';
+	    }
+	}
 ```
 
 Variables
@@ -148,7 +159,7 @@ To load this library,
 you need to specify this library's path in ngx_lua's lua_package_path directive. For example:
 ```nginx
 http {
-   lua_package_path '/path/to/lua-resty-stats/lib/?.lua;/path/to/lua-resty-stats/lib/?/init.lua;;';
+   lua_package_path '/path/to/lua-resty-stats/lib/?.lua;/path/to/lua-resty-stats/lib/?/init.lua;/path/to/lua-resty-stats/view/?.lua;;';
 }
 ```
 
@@ -219,13 +230,6 @@ if the `stats_name` is nil, log method will collect all the statistics that have
 Simple Query
 =======
 lua-resty-stats comes with a simple query page, which can be used in the following steps:
-* Modify configuration file lua-resty-stats/view/config.lua, add the mongodb configuration
-
-```lua
-_M.servers = {
-	["localnginx"]={host="127.0.0.1", port=27017, dbname="ngx_stats"},
-}
-```
 * add location configuration to nginx.conf
 
 ```nginx
@@ -239,6 +243,12 @@ location /stats {
 
 ![docs/query-page.png](docs/query-page.png "The Simple Query")
 
+Simple Demo
+========
+[Simple Stats demo](docs/stats_simple_demo.conf "Simple Stats demo")
+
+You can include it in nginx.conf using the include directive. Such as:
+`include /path/to/simple_stats.conf;`
 
 Authors
 =======
