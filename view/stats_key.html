@@ -4,7 +4,7 @@ local f = require("filter")
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Stats Query</title>
+<title>URL Stats Query</title>
 <style type="text/css">
 <!--
 body {
@@ -30,39 +30,27 @@ body,td,th {
 
 <body>
 <table width="1200" border="0" align="center" cellpadding="2" cellspacing="0" bgcolor="#999999">
-  <tr bgcolor="#C1C1C1">
+  <tr>
     <td height="1"></td>
   </tr>
 </table>
-<form action="{{uri}}" >
+
 <table width="1200" border="0" align="center" cellpadding="2" cellspacing="2" bordercolor="#FFFFFF" bgcolor="#F1F1F1">
-  <tr>
-    <td width="25%" nowrap>      
-      &nbsp;
-     Table: 
-     <select name="table" id="table" style="width:150px;">
-      {*tables*}
-     </select>
-     </td>
-    <td height="30" nowrap>Date:</td>
-    <td nowrap>
-      <input type="text" name="date" id="date" value="{{date}}"/>
-      &nbsp;&nbsp;&nbsp;&nbsp; <a href="{{prev_uri}}" target="_self">Prev</a> | {{date}} | <a href="{{next_uri}}" target="_self">Next</a> | <a href="{{today_uri}}" target="_self">Today</a>
-    </td>
-    <td nowrap>&nbsp;&nbsp;&nbsp;<input type="submit" name="submit" id="submit" value="Query" /></td>
+  <tr bgcolor="#C1C1C1">
+    <td width="120" height="30" nowrap> Stats Key: </td>
+    <td nowrap>{{key}}</td>
   </tr>
 </table>
-</form>
+
 <table width="1200" border="0" align="center" cellpadding="1" cellspacing="1">
   <tr>
-    <td width="20" height="25" nowrap="nowrap" bgcolor="#999999">&nbsp;No</td>
+    <td width="25" height="25" nowrap="nowrap" bgcolor="#999999">&nbsp;No</td>
     <td width="120" nowrap="nowrap" bgcolor="#999999">&nbsp;Date</td>
-    <td width="450" nowrap="nowrap" bgcolor="#999999">Stats Key</td>
-    <td width="100" nowrap="nowrap" bgcolor="#999999">requests</td>
-    <td width="125" nowrap="nowrap" bgcolor="#999999">Ok(2xx/3xx)</td>
-    <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(4xx)</td>
-    <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(5xx)</td>
-    <td width="160" nowrap="nowrap" bgcolor="#999999">Avg Response Time</td>
+    <td width="200" nowrap="nowrap" bgcolor="#999999">requests</td>
+    <td width="180" nowrap="nowrap" bgcolor="#999999">Ok(2xx/3xx)</td>
+    <td width="180" nowrap="nowrap" bgcolor="#999999">Fail(4xx)</td>
+    <td width="180" nowrap="nowrap" bgcolor="#999999">Fail(5xx)</td>
+    <td width="200" nowrap="nowrap" bgcolor="#999999">Avg Response Time</td>
     <td nowrap="nowrap" bgcolor="#999999">Operate</td>
   </tr>
   {% for i, stats in ipairs(stats_list) do 
@@ -76,9 +64,6 @@ body,td,th {
   <tr>
     <td height="25" nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;{{i}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;{{stats.date}}</td>
-    <td nowrap="nowrap" bgcolor="{{bgcolor}}">
-      <a href="/stats/key?key={{stats.key}}&table={{table}}&limit=50" target="_blank">{{stats.key}}</a>
-    </td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.requests_alt(stats)}}">{{stats.count}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.ok_alt(stats)}}">{{ok_count}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.fail_alt_4xx(stats)}}" {% if fail_4xx_count > 1 then %} class="fail_4xx" {% end %}>
@@ -94,12 +79,3 @@ body,td,th {
 </table>
 </body>
 </html>
-<script>
-  function server_on_change(sel){
-    var items = sel.options[sel.selectedIndex].getAttribute("tables");
-    document.getElementById('table').innerHTML = items;
-  }
-  {% if errmsg then %}
-    alert("{{errmsg}}");
-  {% end %}
-</script>

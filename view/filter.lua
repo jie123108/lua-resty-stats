@@ -27,12 +27,12 @@ function _M.requests_alt(stats)
 	return table.concat(alts)
 end
 
-function _M.ok(stats)
+local function status_count(stats, begin, end_)
 	if stats.status then
 		local ok_count = 0
 		for status, count in pairs(stats.status) do 
 			status = tonumber(status) or 0
-			if status >= 200 and status < 400 then
+			if status >= begin and status <= end_ then
 				ok_count = ok_count + tonumber(count)
 			end
 		end
@@ -42,65 +42,50 @@ function _M.ok(stats)
 	end
 end
 
+local function status_alt(stats, begin, end_)
+	if stats.status == nil then
+		return ""
+	end
+
+	local status_all = {}
+	for status, count in pairs(stats.status) do 
+		local xstatus = tonumber(status) or 0
+		if xstatus >= begin and xstatus <= end_ then
+			table.insert(status_all, status)
+		end
+	end
+
+	table.sort(status_all)
+
+	local alts = {}
+	for i, status in ipairs(status_all) do 
+		table.insert(alts, status .. ": " .. tostring(stats.status[status]))		
+	end
+	return table.concat(alts)
+end
+
+function _M.ok(stats)
+	return status_count(stats, 200, 399)
+end
+
 function _M.ok_alt(stats)
-	if stats.status == nil then
-		return ""
-	end
-
-	local status_all = {}
-	for status, count in pairs(stats.status) do 
-		local xstatus = tonumber(status) or 0
-		if xstatus >= 200 and xstatus < 400 then
-			table.insert(status_all, status)
-		end
-	end
-
-	table.sort(status_all)
-
-	local alts = {}
-	for i, status in ipairs(status_all) do 
-		table.insert(alts, status .. ": " .. tostring(stats.status[status]))		
-	end
-	return table.concat(alts)
+	return status_alt(stats, 200, 399)
 end
 
-
-function _M.fail(stats)
-	if stats.status then
-		local fail_count = 0
-		for status, count in pairs(stats.status) do 
-			status = tonumber(status) or 0
-			if status >= 400 then
-				fail_count = fail_count + tonumber(count)
-			end
-		end
-		return fail_count
-
-	else
-		return '0'
-	end
+function _M.fail_4xx(stats)
+	return status_count(stats, 400, 499)
 end
 
-function _M.fail_alt(stats)
-	if stats.status == nil then
-		return ""
-	end
+function _M.fail_alt_4xx(stats)
+	return status_alt(stats, 400, 499)
+end
 
-	local status_all = {}
-	for status, count in pairs(stats.status) do 
-		local xstatus = tonumber(status) or 0
-		if xstatus >= 400 then
-			table.insert(status_all, status)
-		end
-	end
+function _M.fail_5xx(stats)
+	return status_count(stats, 500, 599)
+end
 
-	table.sort(status_all)
-
-	local alts = {}
-	for i, status in ipairs(status_all) do 
-		table.insert(alts, status .. ": " .. tostring(stats.status[status]))		
-	end
-	return table.concat(alts)
+function _M.fail_alt_5xx(stats)
+	return status_alt(stats, 500, 599)
 end
 
 function _M.avgtime(stats)

@@ -40,9 +40,36 @@ local function get_stats(mongo_cfg, collname, date)
 	local db = conn:new_db_handle(dbname)
 	local coll = db:get_col(collname)
 	local query = {date=date}
-	local cursor = coll:find(query)
+	local cursor = coll:find(query, nil, 256)
 	if cursor then
 		local tmp_stats,err = cursor:sort({count=-1})
+		if err then
+			ngx.log(ngx.ERR, "cursor:sort failed! err:", tostring(err))
+		elseif tmp_stats and type(tmp_stats) == 'table' then
+			for _, s in ipairs(tmp_stats) do 
+				s['_id'] = nil
+			end
+			stats = tmp_stats
+		end
+	end
+	conn_put(conn)
+	return true, stats
+end
+
+local function get_stats_by_key(mongo_cfg, collname, key)
+	local ok, conn = conn_get(mongo_cfg)
+	if not ok then
+		return ok, conn
+	end
+	ngx.log(ngx.INFO, "-------", collname, ", key:", key)
+	local stats = {}
+	local dbname = mongo_cfg.dbname or "ngx_stats"
+	local db = conn:new_db_handle(dbname)
+	local coll = db:get_col(collname)
+	local query = {key=key}
+	local cursor = coll:find(query, nil, 256)
+	if cursor then
+		local tmp_stats,err = cursor:sort({date=-1})
 		if err then
 			ngx.log(ngx.ERR, "cursor:sort failed! err:", tostring(err))
 		elseif tmp_stats and type(tmp_stats) == 'table' then
@@ -64,4 +91,5 @@ end
 return {
 	get_all_collections = get_all_collections,
 	get_stats = get_stats, 
+	get_stats_by_key = get_stats_by_key,
 }

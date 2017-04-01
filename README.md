@@ -35,23 +35,28 @@ Synopsis
         
         -- stats by uri
         stats.add_stats_config("stats_uri", 
-            {selector={date="$date",key="$uri"}, update=update,index_keys={"date", "key"}})
-        
+            {selector={date="$date",key="$uri"}, update=update,
+             indexes={{keys={'date', 'key'}, options={unique=true}},{keys={'key'}, options={}}} })
+            
         -- stats by arg        
         stats.add_stats_config("stats_arg", 
-            {selector={date="$date",key="$arg_client_type"}, update=update,index_keys={"date", "key"}})
+            {selector={date="$date",key="$arg_client_type"}, update=update,
+             indexes={{keys={'date', 'key'}, options={unique=true}},{keys={'key'}, options={}}} })
 
         -- stats by uri and args 
         stats.add_stats_config("stats_uri_arg", 
-            {selector={date="$date",key="$uri?$arg_from"}, update=update,index_keys={"date", "key"}})
+            {selector={date="$date",key="$uri?$arg_from"}, update=update,
+             indexes={{keys={'date', 'key'}, options={unique=true}},{keys={'key'}, options={}}} })
 
         -- stats by http request header
         stats.add_stats_config("stats_header_in", 
-            {selector={date="$date",key="city:$http_city"}, update=update,index_keys={"date", "key"}})
+            {selector={date="$date",key="city:$http_city"}, update=update,
+             indexes={{keys={'date', 'key'}, options={unique=true}},{keys={'key'}, options={}}} })
         
         -- stats by http response header
         stats.add_stats_config("stats_header_out", 
-            {selector={date="$date",key="cache:$sent_http_cache"}, update=update,index_keys={"date", "key"}})
+            {selector={date="$date",key="cache:$sent_http_cache"}, update=update,
+             indexes={{keys={'date', 'key'}, options={unique=true}},{keys={'key'}, options={}}} })
 
         local mongo_cfg = {host="192.168.1.201", port=27017, dbname="ngx_stats"}
         local flush_interval = 2 -- second
@@ -182,7 +187,11 @@ stats_config:
     selector={date='$date',key='$host'}, 
     update={['$inc']= {count=1, ['hour_cnt.$hour']=1, ['status.$status']=1, 
             ['req_time.all']="$request_time", ['req_time.$hour']="$request_time"}},
-    index_keys={'date', 'key'}, index_options={}}
+            indexes={
+                {keys={'date', 'key'}, options={unique=true}},
+                {keys={'key'}, options={}}
+            },
+    }
 }
 ```
 After this method is called, when you used stats.log(stats_name) method, you can use these predefined statistics.
@@ -199,7 +208,7 @@ The name will be used when calling the `stats.log(stats_name)` method.
     * `selector` a mongodb query statement. like: `{date="$date",key="$host"}`
     * `update` a mongodb update statement. like: `{["$inc"]= {count=1, ["hour_cnt.$hour"]=1, ["status.$status"]=1, 
                       ["req_time.all"]="$request_time", ["req_time.$hour"]="$request_time"}}`
-    * `index_keys` a table that contains all fields of the index.
+    * `indexes` a table that contains all fields of the index.
  
 The `selector` and `update` configuration can use [variables](#variables).  <br/>
 Note that "$inc" is not a nginx variable, it's a mongodb's operator. 

@@ -74,14 +74,18 @@ $hour,$minute,$second 分别为时分秒。
 ]]
 -- selector 更新使用的查询子
 -- update 更新语句。
--- index_keys 更新查询需要用到的索引的字段。
+-- indexes 更新查询需要用到的索引的字段。
 local def_stats_configs = {
     stats_host={
         selector={date='$date',key='$host'}, 
         update={['$inc']= {count=1, ['hour_cnt.$hour']=1, ['status.$status']=1, 
                     ['req_time.all']="$request_time", ['req_time.$hour']="$request_time"}},
-        index_keys={'date', 'key'}, index_options={}}
+        indexes={
+            {keys={'date', 'key'}, options={unique=true}},
+            {keys={'key'}, options={}}
+        }
     }
+}
 
 local stats_configs = {}
 
@@ -170,7 +174,7 @@ stats_name: stats name and table name.
 stats_config:
     -- selector: the mongodb update selector
     -- update: the mongodb update statement
-    -- index_keys the index keys of the selector used.
+    -- indexes the indexes of the selector used.
     eg.:
 stats_name: stats_host
 stats_config: 
@@ -178,7 +182,10 @@ stats_config:
         selector={date='$date',key='$host'}, 
         update={['$inc']= {count=1, ['hour_cnt.$hour']=1, ['status.$status']=1, 
                     ['req_time.all']="$request_time", ['req_time.$hour']="$request_time"}},
-        index_keys={'date', 'key'}, index_options={}}
+        indexes={
+            {keys={'date', 'key'}, options={unique=true}},
+            {keys={'key'}, options={}}
+        }
     }
 ]]
 function _M.add_stats_config(stats_name, stats_config)
@@ -210,12 +217,11 @@ function _M.init(mongo_cfg, flush_interval, retry_interval)
     check_config(stats_configs)
     local function create_index_callback(premature, stats_configs, mongo_cfg)
         for stats_name, stats_config in pairs(stats_configs) do 
-            local index_keys = stats_config.index_keys
-            if index_keys then
-                local collection = stats_name   
-                local ok, err = coll_util.create_coll_index(mongo_cfg, collection, index_keys,stats_config.index_options) 
-                ngx.log(ngx.INFO, "create_coll_index(", collection, ") ok:", 
-                        tostring(ok), ", err:", tostring(err))       
+            local indexes = stats_config.indexes
+            if indexes then
+                local collection = stats_name  
+                local ok, err = coll_util.create_coll_index(mongo_cfg, collection, indexes) 
+                ngx.log(ngx.INFO, "create_coll_index(", collection, ") ok:", tostring(ok), ", err:", tostring(err)) 
             end
         end
     end

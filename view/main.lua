@@ -61,45 +61,88 @@ local function get_query_date(args)
 	return date, prev_day, next_day, today
 end
 
---ngx.req.read_body()
-local args, err = ngx.req.get_uri_args()
-local table = args.table
-local tables = get_all_table_info(table)
+local function stats_def()
+	local args, err = ngx.req.get_uri_args()
+	local table = args.table
+	local tables = get_all_table_info(table)
 
-local date, prev_day, next_day, today = get_query_date(args)
+	local date, prev_day, next_day, today = get_query_date(args)
 
-args.submit = nil
-args.date = prev_day
-local prev_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
-args.date = next_day
-local next_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
-args.date = today
-local today_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
+	args.submit = nil
+	args.date = prev_day
+	local prev_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
+	args.date = next_day
+	local next_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
+	args.date = today
+	local today_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
 
 
-local stats_list = {}
-local errmsg = nil
--- query stats
-if table and date then
-	local mongo_cfg = stats.mongo_cfg
-	local ok, stats = mongo.get_stats(mongo_cfg, table, date)
-	if not ok then
-		ngx.log(ngx.ERR, "mongo.get_stats failed! err:", tostring(stats))
-		errmsg = "error on query:" .. tostring(stats)
-	else
-		stats_list = stats
+	local stats_list = {}
+	local errmsg = nil
+	-- query stats
+	if table and date then
+		local mongo_cfg = stats.mongo_cfg
+		local ok, stats = mongo.get_stats(mongo_cfg, table, date)
+		if not ok then
+			ngx.log(ngx.ERR, "mongo.get_stats(", table, ",", date, ") failed! err:", tostring(stats))
+			errmsg = "error on query:" .. tostring(stats)
+		else
+			stats_list = stats
+		end
 	end
+	
+	local page_args = {tables=tables, 
+					uri=ngx.var.uri,
+					table=table, date=date, 
+					prev_uri=prev_uri, next_uri=next_uri, today_uri=today_uri,
+					errmsg=errmsg, stats_list=stats_list}
+
+	ngx.log(ngx.INFO, "page_args: ", cjson.encode(page_args))
+	template.caching(cache_tmpl or true)
+	template.render("stats.html", page_args)
 end
---ngx.log(ngx.INFO, "query stats:", #stats_list)
+
+local function stats_key()
+	local args, err = ngx.req.get_uri_args()
+	local key = args.key
+	local table = args.table
+	local limit = tonumber(args.limit)
+
+	local stats_list = {}
+	local errmsg = nil
+	-- query stats
+	if key then
+		local mongo_cfg = stats.mongo_cfg
+		local ok, stats = mongo.get_stats_by_key(mongo_cfg, table, key)
+		if not ok then
+			ngx.log(ngx.ERR, "mongo.get_stats_by_key failed! err:", tostring(stats))
+			errmsg = "error on query:" .. tostring(stats)
+		else
+			stats_list = stats
+		end
+	end
+	
+	local page_args = {
+					key=key, limit=limit, 
+					errmsg=errmsg, stats_list=stats_list}
+
+	ngx.log(ngx.INFO, "page_args: ", cjson.encode(page_args))
+	template.caching(cache_tmpl or true)
+	template.render("stats_key.html", page_args)
+end
+
 ngx.header["Content-Type"] = 'text/html'
-template.caching(cache_tmpl or true)
-local page_args = {tables=tables, 
-				uri=ngx.var.uri,
-				table=table,date=date, 
-				prev_uri=prev_uri, next_uri=next_uri, today_uri=today_uri,
-				errmsg=errmsg, stats_list=stats_list}
 
-ngx.log(ngx.INFO, "page_args: ", cjson.encode(page_args))
-template.render("stats.html", page_args)
+local uri = ngx.var.uri
+local router = {
+	["/stats"] = stats_def,
+	["/stats/key"] = stats_key,
+}
 
-
+local func = router[uri]
+if func then 
+	func()	
+else 
+	ngx.log(ngx.ERR, "invalid request [", uri, "]")
+	ngx.exit(404)
+end
