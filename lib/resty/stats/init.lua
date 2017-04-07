@@ -198,9 +198,17 @@ function _M.add_stats_config(stats_name, stats_config)
     stats_configs[stats_name] = stats_config
 end
 
+_M.stats_names = {}
+function _M.add_stats_name(name)
+    _M.stats_names[name] = true
+end
+
 function _M.get_stats_names()
     local names = {}
     for k, _ in pairs(stats_configs) do 
+        table.insert(names, k)
+    end
+    for k, _ in pairs(_M.stats_names) do 
         table.insert(names, k)
     end
     return names
