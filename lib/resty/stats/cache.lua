@@ -45,7 +45,7 @@ function _M.write_stats(stats)
             local selector = arr[2]
             local debug_sql = 
 
-            ngx.log(ngx.INFO, "write_stats: db.", collname, ".update(", selector, ",", json.dumps(update), ",{upsert: true});")
+            ngx.log(ngx.DEBUG, "write_stats: db.", collname, ".update(", selector, ",", json.dumps(update), ",{upsert: true});")
 
             selector = json.loads(selector)
             local dao = mongo_dao:new(_M.mongo_cfg, collname)
