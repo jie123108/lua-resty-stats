@@ -29,6 +29,23 @@ local function conn_put(conn)
 	conn:set_keepalive()
 end
 
+
+local function add_percent(stats_list)
+	local total = 0
+	for i, stats in ipairs(stats_list) do 
+		local count = stats.count or 0
+		total = total + count
+	end
+	if total > 0 then
+		for i, stats in ipairs(stats_list) do 
+			local count = stats.count or 0
+			local percent = (count*1.0 / total) * 100.0
+			stats.percent = percent
+			stats.total = total
+		end
+	end
+end
+
 local function get_stats(mongo_cfg, collname, date)
 	local ok, conn = conn_get(mongo_cfg)
 	if not ok then
@@ -50,9 +67,11 @@ local function get_stats(mongo_cfg, collname, date)
 				s['_id'] = nil
 			end
 			stats = tmp_stats
+			add_percent(stats)
 		end
 	end
 	conn_put(conn)
+
 	return true, stats
 end
 

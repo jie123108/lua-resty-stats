@@ -3,10 +3,28 @@ local _M = {}
 
 local function sep(i)
 	if i % 2 == 1 then
-		return "  "
+		return ",  "
 	else 
 		return "\n"
 	end
+end
+
+function _M.key_trim(stats_key)
+	if type(stats_key) ~= 'string' then 
+		return ''
+	end
+	if #stats_key > 55 then 
+		return string.sub(stats_key, 1, 55) .. "..."
+	end
+	return stats_key
+end
+
+function _M.percent_alt(stats)
+	return string.format("%d/%d", stats.percent or 0, stats.total or 1)
+end
+
+function _M.percent(percent)
+	return string.format("%.2f%%", percent or 0)
 end
 
 function _M.requests_alt(stats)

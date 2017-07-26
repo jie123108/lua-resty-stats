@@ -59,11 +59,11 @@ body,td,th {
     <td width="120" nowrap="nowrap" bgcolor="#999999">&nbsp;Date</td>
     <td width="450" nowrap="nowrap" bgcolor="#999999">Stats Key</td>
     <td width="100" nowrap="nowrap" bgcolor="#999999">requests</td>
+    <td width="40" nowrap="nowrap" bgcolor="#999999">percent</td>
     <td width="125" nowrap="nowrap" bgcolor="#999999">Ok(2xx/3xx)</td>
     <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(4xx)</td>
     <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(5xx)</td>
-    <td width="160" nowrap="nowrap" bgcolor="#999999">Avg Response Time</td>
-    <td nowrap="nowrap" bgcolor="#999999">Operate</td>
+    <td width="120" nowrap="nowrap" bgcolor="#999999">Response Time</td>
   </tr>
   {% for i, stats in ipairs(stats_list) do 
   local bgcolor = "#CCCCCC"
@@ -76,10 +76,11 @@ body,td,th {
   <tr>
     <td height="25" nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;{{i}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;{{stats.date}}</td>
-    <td nowrap="nowrap" bgcolor="{{bgcolor}}">
-      <a href="/stats/key?key={{stats.key}}&table={{table}}&limit=50" target="_blank">{{stats.key}}</a>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{stats.key}}">
+      <a href="/stats/key?key={{stats.key}}&table={{table}}&limit=50" target="_blank">{{f.key_trim(stats.key)}}</a>
     </td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.requests_alt(stats)}}">{{stats.count}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.percent_alt(stats)}}">{{f.percent(stats.percent)}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.ok_alt(stats)}}">{{ok_count}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.fail_alt_4xx(stats)}}" {% if fail_4xx_count > 1 then %} class="fail_4xx" {% end %}>
       {{fail_4xx_count}}
@@ -88,7 +89,6 @@ body,td,th {
       {{fail_5xx_count}}
     </td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.avgtime_alt(stats)}}" {% if tonumber(avgtime) > 0.200 then %} class="slow" {% end %}>{{avgtime}}</td>
-    <td nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;</td>
   </tr>
   {% end %}
 </table>
