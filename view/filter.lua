@@ -20,7 +20,7 @@ function _M.key_trim(stats_key)
 end
 
 function _M.percent_alt(stats)
-	return string.format("%d/%d", stats.percent or 0, stats.total or 1)
+	return string.format("%d/%d", stats.count or 0, stats.total or 1)
 end
 
 function _M.percent(percent)
@@ -79,7 +79,7 @@ local function status_alt(stats, begin, end_)
 	for i, status in ipairs(status_all) do 
 		table.insert(alts, status .. ": " .. tostring(stats.status[status]))		
 	end
-	return table.concat(alts)
+	return table.concat(alts, ", ")
 end
 
 function _M.ok(stats)
