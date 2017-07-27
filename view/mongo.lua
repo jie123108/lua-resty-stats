@@ -29,6 +29,20 @@ local function conn_put(conn)
 	conn:set_keepalive()
 end
 
+local function stats_filter_by_key(stats_list, key_pattern)
+	if key_pattern == nil or key_pattern == "" then 
+		return stats_list
+	end
+	local stats_new = {}
+	for _, stats in ipairs(stats_list) do 
+		if stats.key and ngx.re.match(stats.key,key_pattern) then 
+			table.insert(stats_new, stats)
+		end
+	end
+
+	return stats_new
+end
+
 
 local function add_percent(stats_list)
 	local total = 0
@@ -46,7 +60,7 @@ local function add_percent(stats_list)
 	end
 end
 
-local function get_stats(mongo_cfg, collname, date)
+local function get_stats(mongo_cfg, collname, date, key_pattern)
 	local ok, conn = conn_get(mongo_cfg)
 	if not ok then
 		return ok, conn
@@ -66,7 +80,7 @@ local function get_stats(mongo_cfg, collname, date)
 			for _, s in ipairs(tmp_stats) do 
 				s['_id'] = nil
 			end
-			stats = tmp_stats
+			stats = stats_filter_by_key(tmp_stats, key_pattern)
 			add_percent(stats)
 		end
 	end

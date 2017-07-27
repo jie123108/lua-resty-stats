@@ -64,6 +64,7 @@ end
 local function stats_def()
 	local args, err = ngx.req.get_uri_args()
 	local table = args.table
+	local key_pattern = args.key
 	local tables = get_all_table_info(table)
 
 	local date, prev_day, next_day, today = get_query_date(args)
@@ -82,7 +83,7 @@ local function stats_def()
 	-- query stats
 	if table and date then
 		local mongo_cfg = stats.mongo_cfg
-		local ok, stats = mongo.get_stats(mongo_cfg, table, date)
+		local ok, stats = mongo.get_stats(mongo_cfg, table, date, key_pattern)
 		if not ok then
 			ngx.log(ngx.ERR, "mongo.get_stats(", table, ",", date, ") failed! err:", tostring(stats))
 			errmsg = "error on query:" .. tostring(stats)
@@ -93,7 +94,7 @@ local function stats_def()
 	
 	local page_args = {tables=tables, 
 					uri=ngx.var.uri,
-					table=table, date=date, 
+					table=table, date=date, key=key_pattern,
 					prev_uri=prev_uri, next_uri=next_uri, today_uri=today_uri,
 					errmsg=errmsg, stats_list=stats_list}
 

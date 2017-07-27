@@ -37,16 +37,22 @@ body,td,th {
 <form action="{{uri}}" >
 <table width="1200" border="0" align="center" cellpadding="2" cellspacing="2" bordercolor="#FFFFFF" bgcolor="#F1F1F1">
   <tr>
-    <td width="25%" nowrap>      
+    <td height="30" width="25%" nowrap>      
       &nbsp;
      Table: 
      <select name="table" id="table" style="width:150px;">
       {*tables*}
      </select>
      </td>
-    <td height="30" nowrap>Date:</td>
-    <td nowrap>
+    <td>Date:</td>
+    <td>
       <input type="text" name="date" id="date" value="{{date}}"/>
+    </td>
+    <td>Key Filter:</td>
+    <td>
+      <input type="text" name="key" id="key" value="{{key}}"/>
+    </td>
+    <td>
       &nbsp;&nbsp;&nbsp;&nbsp; <a href="{{prev_uri}}" target="_self">Prev</a> | {{date}} | <a href="{{next_uri}}" target="_self">Next</a> | <a href="{{today_uri}}" target="_self">Today</a>
     </td>
     <td nowrap>&nbsp;&nbsp;&nbsp;<input type="submit" name="submit" id="submit" value="Query" /></td>
