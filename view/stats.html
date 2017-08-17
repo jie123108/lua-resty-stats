@@ -70,6 +70,9 @@ body,td,th {
     <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(4xx)</td>
     <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(5xx)</td>
     <td width="120" nowrap="nowrap" bgcolor="#999999">Response Time</td>
+    {% if mon then %}
+    <td width="30" nowrap="nowrap" bgcolor="#999999">Mon</td>
+    {% end %}
   </tr>
   {% for i, stats in ipairs(stats_list) do 
   local bgcolor = "#CCCCCC"
@@ -95,6 +98,9 @@ body,td,th {
       {{fail_5xx_count}}
     </td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.avgtime_alt(stats)}}" {% if tonumber(avgtime) > 0.200 then %} class="slow" {% end %}>{{avgtime}}</td>
+    {% if mon then %}
+    <td width="30" nowrap="nowrap" bgcolor="#999999">{{f.mon_status(stats)}}</td>
+    {% end %}
   </tr>
   {% end %}
 </table>

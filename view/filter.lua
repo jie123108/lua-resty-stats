@@ -137,4 +137,12 @@ function _M.avgtime_alt(stats)
 	return table.concat(alts)
 end
 
+function _M.mon_status(stats)
+	if stats.monitor_time then
+		return 'Y'
+	else
+		return 'N'
+	end
+end
+
 return _M

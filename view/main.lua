@@ -93,7 +93,7 @@ local function stats_def()
 	end
 	
 	local page_args = {tables=tables, 
-					uri=ngx.var.uri,
+					uri=ngx.var.uri, mon=args.mon,
 					table=table, date=date, key=key_pattern,
 					prev_uri=prev_uri, next_uri=next_uri, today_uri=today_uri,
 					errmsg=errmsg, stats_list=stats_list}

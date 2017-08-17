@@ -244,13 +244,17 @@ function _M.init(mongo_cfg, flush_interval, retry_interval)
     cache.start_stats_flush_timer()
 end
 
-function _M.log(stats_name)
+function _M.log(stats_name, filter)
     local values = ngx.var 
     local function log_format(stats_name, stats_config)
         local fmt_selector = stats_config.selector
         local fmt_update = stats_config.update
         local selector = table_format(fmt_selector, values)
         local update = table_format(fmt_update, values)
+        if filter then 
+            -- 可以对selector, udpate 进行处理.
+            filter(stats_name, selector, update)        
+        end
         cache.add_stats(stats_name, selector, update)
     end
     if stats_name == nil then
@@ -264,5 +268,14 @@ function _M.log(stats_name)
     end
 end
 
+function _M.filter_4monitor(stats_name, selector, update)
+    local headers = ngx.req.get_headers()
+    local monitor = headers["X-Monitor"]
+    if monitor and update then 
+        local set = update["$set"] or {}
+        set["monitor_time"] = ngx.time()
+        update["$set"] = set
+    end
+end
 
 return _M
