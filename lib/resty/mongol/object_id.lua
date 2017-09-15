@@ -43,6 +43,8 @@ end
 local object_id_mt = {
     __tostring = _tostring;
     __eq = function ( a , b ) return a.id == b.id end ;
+    __lt = function ( a , b ) return a.id < b.id end ;
+    __le = function ( a , b ) return a.id <= b.id end ;
 }
 
 local machineid
@@ -59,6 +61,7 @@ local inc = 0
 local function generate_id ( )
     inc = inc + 1
     -- "A BSON ObjectID is a 12-byte value consisting of a 4-byte timestamp (seconds since epoch), a 3-byte machine id, a 2-byte process id, and a 3-byte counter. Note that the timestamp and counter fields must be stored big endian unlike the rest of BSON"
+    inc = inc < 2^24 and inc or (2^24 - inc + 1)
     return num_to_be_uint ( os.time ( ) , 4 ) .. machineid .. pid .. num_to_be_uint ( inc , 3 )
 end
 

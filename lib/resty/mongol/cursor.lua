@@ -11,7 +11,7 @@ local cursor_mt = { __index = cursor_methods }
 local function new_cursor(col, query, returnfields, num_each_query)
     return setmetatable ( {
             col = col ;
-            query = query ;
+            query = { ['$query'] = query} ;
             returnfields = returnfields ;
 
             id = false ;
@@ -20,7 +20,8 @@ local function new_cursor(col, query, returnfields, num_each_query)
             done = false ;
             i = 0;
             limit_n = 0;
-            num_each = num_each_query;
+            skip_n = 0;
+            num_each = num_each_query or 100,
         } , cursor_mt )
 end
 
@@ -40,66 +41,26 @@ function cursor_methods:limit(n)
     assert(n)
     self.limit_n = n
 end
+function cursor_methods:skip(n)
+    assert(n)
+    self.skip_n = n
+end
 
 --todo
 --function cursor_methods:skip(n)
 
-function cursor_methods:sort(field, size)
-    size = size or 10000
-    if size < 2 then return nil, "number of object must > 1" end
-    if not field then return nil, "field should not be nil" end
-
-    local key, asc, t
-    for k,v in pairs(field) do
-        key = k
-        asc = v
-        break
-    end
-    if asc ~= 1 and asc ~= -1 then return nil, "order must be 1 or -1" end
-
-    local sort_f = 
-            function(a, b) 
-                if not a and not b then return false end
-                if not a then return true end
-                if not b then return false end
-                if not a[key] and not b[key] then return false end
-                if not a[key] then return true end
-                if not b[key] then return false end
-                if asc == 1 then
-                    return a[key] < b[key]
-                else
-                    return a[key] > b[key]
-                end
-            end
-
-    if #self.results > self.i then
-        table.sort(self.results, sort_f)
-    elseif #self.results == 0 and self.i == 0 then
-        if self.num_each == 0 and self.limit_n ~= 0 then
-            size = self.limit_n
-        elseif self.num_each ~= 0 and self.limit_n == 0 then
-            size = self.num_each
-        else
-            size = (self.num_each < self.limit_n 
-                        and self.num_each) or self.limit_n
-        end
-        
-        self.id, self.results, t = self.col:query(self.query, 
-                        self.returnfields, self.i, size)
-        table.sort(self.results, sort_f)
-    else
-        return nil, "sort must be an array"
-    end
-    return self.results
+function cursor_methods:sort(fields)
+    self.query["$orderby"] = fields
+    return self
 end
 
 function cursor_methods:next()
     if self.limit_n > 0 and self.i >= self.limit_n then return nil end
-
-    local v = self.results [ self.i + 1 ]
+    local idx = self.i - math.floor(self.i/self.num_each)*self.num_each
+    local v = self.results [ idx  + 1 ]
     if v ~= nil then
         self.i = self.i + 1
-        self.results [ self.i ] = nil
+        self.results [ idx+1 ] = nil
         return self.i , v
     end
 
@@ -107,21 +68,23 @@ function cursor_methods:next()
 
     local t
     if not self.id then
-        self.id, self.results, t = self.col:query(self.query, 
-                        self.returnfields, self.i, self.num_each)
+    	-- ngx.log(ngx.ERR, "--------- query -------- self.i:", self.i, " num_each:", self.num_each)
+        self.id, self.results, t = self.col:query(self.query,
+                        self.returnfields, self.skip_n or 0, self.num_each)
         if self.id == "\0\0\0\0\0\0\0\0" then
             self.done = true
         end
     else
-        self.id, self.results, t = self.col:getmore(self.id, 
-                        self.num_each, self.i)
+    	-- ngx.log(ngx.ERR, "--------- getmore -------- self.num_each:", self.num_each, ", skip:", self.skip_n)
+        self.id, self.results, t = self.col:getmore(self.id, self.num_each)
+
         if self.id == "\0\0\0\0\0\0\0\0" then
             self.done = true
         elseif t.CursorNotFound then
             self.id = false
         end
     end
-    return self:next ( )
+    return self:next()
 end
 
 function cursor_methods:pairs( )

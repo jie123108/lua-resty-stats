@@ -60,6 +60,48 @@ local function add_percent(stats_list)
 	end
 end
 
+-- function mongo_query(coll, selector, page, limit)
+--     page = page or 1
+--     local offset = (page-1)* limit
+
+--     local _, objs, result = coll:query(selector, nil, offset, limit, options)
+
+--     if result and result.QueryFailure then
+--         if #objs == 1 then
+--             return false, objs[1]["$err"]
+--         else
+--             return false, "unknow-error"
+--         end
+--     end
+--     return true, objs
+-- end
+
+function mongo_find(coll, selector, sortby, skip, limit)
+	local objs = {}
+	skip = skip or 0
+    local cursor, err = coll:find(selector, nil, limit)
+    if cursor then
+    	if skip then
+    		cursor:skip(skip)
+    	end
+    	if limit then
+    		cursor:limit(limit)
+    	end
+    	if sortby then
+    		cursor:sort(sortby)
+    	end
+        for index, item in cursor:pairs() do
+            table.insert(objs, item)
+        end
+    end
+
+    if err then
+        return false, err
+    else
+        return true, objs
+    end
+end
+
 local function get_stats(mongo_cfg, collname, date, key_pattern)
 	local ok, conn = conn_get(mongo_cfg)
 	if not ok then
@@ -71,18 +113,18 @@ local function get_stats(mongo_cfg, collname, date, key_pattern)
 	local db = conn:new_db_handle(dbname)
 	local coll = db:get_col(collname)
 	local query = {date=date}
-	local cursor = coll:find(query, nil, 256)
-	if cursor then
-		local tmp_stats,err = cursor:sort({count=-1})
-		if err then
-			ngx.log(ngx.ERR, "cursor:sort failed! err:", tostring(err))
-		elseif tmp_stats and type(tmp_stats) == 'table' then
-			for _, s in ipairs(tmp_stats) do 
-				s['_id'] = nil
-			end
+	local skip = 0
+	local limit = 300
+	-- local ok, tmp_stats = mongo_query(coll, query, offset, limit)
+	local sortby = {count=-1}
+	local ok, tmp_stats = mongo_find(coll, query, sortby, skip, limit)
+	if ok then
+		if tmp_stats and type(tmp_stats) == 'table' then
 			stats = stats_filter_by_key(tmp_stats, key_pattern)
 			add_percent(stats)
 		end
+	else
+		ngx.log(ngx.ERR, "mongo_query(", json.dumps(query), ") failed! err:", tmp_stats)
 	end
 	conn_put(conn)
 
@@ -100,17 +142,17 @@ local function get_stats_by_key(mongo_cfg, collname, key)
 	local db = conn:new_db_handle(dbname)
 	local coll = db:get_col(collname)
 	local query = {key=key}
-	local cursor = coll:find(query, nil, 256)
-	if cursor then
-		local tmp_stats,err = cursor:sort({date=-1})
-		if err then
-			ngx.log(ngx.ERR, "cursor:sort failed! err:", tostring(err))
-		elseif tmp_stats and type(tmp_stats) == 'table' then
-			for _, s in ipairs(tmp_stats) do 
-				s['_id'] = nil
-			end
+	local skip = 0
+	local limit = 300
+	-- local ok, tmp_stats = mongo_query(coll, query, offset, limit)
+	local sortby = {date=-1}
+	local ok, tmp_stats = mongo_find(coll, query, sortby, skip, limit)
+	if ok then
+		if tmp_stats and type(tmp_stats) == 'table' then
 			stats = tmp_stats
 		end
+	else
+		ngx.log(ngx.ERR, "mongo_query(", json.dumps(query), ") failed! err:", tmp_stats)
 	end
 	conn_put(conn)
 	return true, stats

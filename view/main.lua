@@ -96,9 +96,11 @@ local function stats_def()
 					uri=ngx.var.uri, mon=args.mon,
 					table=table, date=date, key=key_pattern,
 					prev_uri=prev_uri, next_uri=next_uri, today_uri=today_uri,
-					errmsg=errmsg, stats_list=stats_list}
+					errmsg=errmsg}
 
 	ngx.log(ngx.INFO, "page_args: ", cjson.encode(page_args))
+	page_args.stats_list = stats_list
+
 	template.caching(cache_tmpl or true)
 	template.render("stats.html", page_args)
 end
@@ -125,9 +127,10 @@ local function stats_key()
 	
 	local page_args = {
 					key=key, limit=limit, 
-					errmsg=errmsg, stats_list=stats_list}
-
+					errmsg=errmsg}
 	ngx.log(ngx.INFO, "page_args: ", cjson.encode(page_args))
+	page_args.stats_list = stats_list
+	
 	template.caching(cache_tmpl or true)
 	template.render("stats_key.html", page_args)
 end

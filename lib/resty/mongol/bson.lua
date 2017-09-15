@@ -10,6 +10,7 @@ local t_concat = table.concat
 local strformat = string.format
 local strmatch = string.match
 local strbyte = string.byte
+local floor = math.floor
 
 local ll = require ( mod_name .. ".ll" )
 local le_uint_to_num = ll.le_uint_to_num
@@ -54,6 +55,8 @@ local function read_document ( get , numerical )
 			local len = le_uint_to_num ( get ( 4 ) )
 			local subtype = get ( 1 )
 			v = get ( len )
+		elseif op == "\6" then -- undefined
+			v = nil
 		elseif op == "\7" then -- ObjectId
 			v = new_object_id ( get ( 12 ) )
 		elseif op == "\8" then -- false
@@ -80,7 +83,7 @@ local function read_document ( get , numerical )
 		end
 
 		if numerical then
-			t [ tonumber ( e_name ) ] = v
+			t [ tonumber ( e_name ) + 1] = v
 		else
 			t [ e_name ] = v
 		end
@@ -124,7 +127,15 @@ local function pack ( k , v )
 	local mt = getmetatable ( v )
 
 	if ot == "number" then
-		return "\1" .. k .. "\0" .. to_double ( v )
+        if floor(v) == v then
+            if v >= -2^31 and v <= 2^31-1 then --int32
+                return "\16" .. k .. "\0" .. num_to_le_int ( v )
+            else --int64
+                return "\18" .. k .. "\0" .. num_to_le_int ( v, 8 )
+            end
+        else
+            return "\1" .. k .. "\0" .. to_double ( v )
+        end
 	elseif ot == "nil" then
 		return "\10" .. k .. "\0"
 	elseif ot == "string" then
@@ -140,7 +151,7 @@ local function pack ( k , v )
 	elseif mt == utc_date then
 		return "\9" .. k .. "\0" .. num_to_le_int(v.v, 8)
 	elseif mt == binary_mt then
-		return "\5" .. k .. "\0" .. num_to_le_uint(string.len(v.v)) .. 
+		return "\5" .. k .. "\0" .. num_to_le_uint(string.len(v.v)) ..
                v.st .. v.v
 	elseif ot == "table" then
 		local doc , array = to_bson(v)
@@ -149,6 +160,8 @@ local function pack ( k , v )
 		else
 			return "\3" .. k .. "\0" .. doc
 		end
+    elseif ot == "userdata" and tostring(v) == "userdata: NULL" then
+        return "\10" .. k .. "\0"
 	else
 		error ( "Failure converting " .. ot ..": " .. tostring ( v ) )
 	end
@@ -166,8 +179,8 @@ function to_bson(ob)
 			if t_k == "number" and k >= 0 then
 				if k >= high_n then
 					high_n = k
-					seen_n [ k ] = v
 				end
+				seen_n [ k ] = v
 			else
 				onlyarray = false
 			end
@@ -176,24 +189,23 @@ function to_bson(ob)
 	end
 
 	local retarray , m = false
-	if onlystring then -- Do string first so the case of an empty table is done properly
-		local r = { }
-        for k , v in pairs ( ob ) do
---ngx.log(ngx.ERR,"="..k..i)
-            t_insert ( r , pack ( k , v ) )
-        end
-		m = t_concat ( r )
-	elseif onlyarray then
+	if onlyarray then
 		local r = { }
 
-		local low = 0
+		local low = 1
 		--if seen_n [ 0 ] then low = 0 end
 		for i=low , high_n do
-			r [ i ] = pack ( i , seen_n [ i ] )
+			r [ i ] = pack ( i - 1 , seen_n [ i ] )
 		end
 
 		m = t_concat ( r , "" , low , high_n )
 		retarray = true
+	elseif onlystring then -- Do string first so the case of an empty table is done properly
+		local r = { }
+        for k , v in pairs ( ob ) do
+            t_insert ( r , pack ( k , v ) )
+        end
+		m = t_concat ( r )
 	else
 		local ni = 1
 		local keys , vals = { } , { }
