@@ -25,6 +25,19 @@ body,td,th {
 .slow {
 	background-color: #FFFF00;
 }
+.no_change {
+  /*background-color: #006633;*/
+}
+.change_1 {
+  background-color: #FFCC00;
+}
+.change_2 {
+  background-color: #FF6600;
+}
+.change_3 {
+  background-color: #FF0000;
+}
+
 -->
 </style></head>
 
@@ -35,7 +48,7 @@ body,td,th {
   </tr>
 </table>
 <form action="{{uri}}" >
-<table width="1200" border="0" align="center" cellpadding="2" cellspacing="2" bordercolor="#FFFFFF" bgcolor="#F1F1F1">
+<table width="1400" border="0" align="center" cellpadding="2" cellspacing="2" bordercolor="#FFFFFF" bgcolor="#F1F1F1">
   <tr>
     <td height="30" width="25%" nowrap>      
       &nbsp;
@@ -59,17 +72,19 @@ body,td,th {
   </tr>
 </table>
 </form>
-<table width="1200" border="0" align="center" cellpadding="1" cellspacing="1">
+<table width="1400" border="0" align="center" cellpadding="1" cellspacing="1">
   <tr>
     <td width="20" height="25" nowrap="nowrap" bgcolor="#999999">&nbsp;No</td>
     <td width="120" nowrap="nowrap" bgcolor="#999999">&nbsp;Date</td>
     <td width="450" nowrap="nowrap" bgcolor="#999999">Stats Key</td>
+    <td width="100" nowrap="nowrap" bgcolor="#999999">pre_reqs</td>
     <td width="100" nowrap="nowrap" bgcolor="#999999">requests</td>
+    <td width="50" nowrap="nowrap" bgcolor="#999999">changes</td>
     <td width="40" nowrap="nowrap" bgcolor="#999999">percent</td>
     <td width="125" nowrap="nowrap" bgcolor="#999999">Ok(2xx/3xx)</td>
     <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(4xx)</td>
     <td width="80" nowrap="nowrap" bgcolor="#999999">Fail(5xx)</td>
-    <td width="120" nowrap="nowrap" bgcolor="#999999">Response Time</td>
+    <td width="100" nowrap="nowrap" bgcolor="#999999">Resp Time</td>
     {% if mon then %}
     <td width="30" nowrap="nowrap" bgcolor="#999999">Mon</td>
     {% end %}
@@ -81,6 +96,17 @@ body,td,th {
   local fail_4xx_count = tonumber(f.fail_4xx(stats)) or 0
   local fail_5xx_count = tonumber(f.fail_5xx(stats)) or 0
   local avgtime = f.avgtime(stats) or 0
+  local percent_str, percent, flag, changes = f.changes(stats)
+  local percent_class = "no_change"
+  if changes > 100 then 
+    if percent > 100 then 
+      percent_class = "change_3"
+    elseif percent > 60 then 
+      percent_class = "change_2"
+    elseif percent > 20 then 
+      percent_class = "change_1"
+    end
+  end
   %}
   <tr>
     <td height="25" nowrap="nowrap" bgcolor="{{bgcolor}}">&nbsp;{{i}}</td>
@@ -88,7 +114,12 @@ body,td,th {
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{stats.key}}">
       <a href="/stats/key?key={{stats.key}}&table={{table}}&limit=50" target="_blank">{{f.key_trim(stats.key)}}</a>
     </td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}">{{stats.pre_count}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.requests_alt(stats)}}">{{stats.count}}</td>
+    <td nowrap="nowrap" bgcolor="{{bgcolor}}" class="{{percent_class}}"
+      title="requests for {{prev_day}}">
+      {{percent_str}}
+    </td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.percent_alt(stats)}}">{{f.percent(stats.percent)}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.ok_alt(stats)}}">{{ok_count}}</td>
     <td nowrap="nowrap" bgcolor="{{bgcolor}}" title="{{f.fail_alt_4xx(stats)}}" {% if fail_4xx_count > 1 then %} class="fail_4xx" {% end %}>

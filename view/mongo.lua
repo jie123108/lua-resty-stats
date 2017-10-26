@@ -102,7 +102,7 @@ function mongo_find(coll, selector, sortby, skip, limit)
     end
 end
 
-local function get_stats(mongo_cfg, collname, date, key_pattern)
+local function get_stats(mongo_cfg, collname, date, key_pattern, limit)
 	local ok, conn = conn_get(mongo_cfg)
 	if not ok then
 		return ok, conn
@@ -114,8 +114,7 @@ local function get_stats(mongo_cfg, collname, date, key_pattern)
 	local coll = db:get_col(collname)
 	local query = {date=date}
 	local skip = 0
-	local limit = 300
-	-- local ok, tmp_stats = mongo_query(coll, query, offset, limit)
+	limit = limit or 300
 	local sortby = {count=-1}
 	local ok, tmp_stats = mongo_find(coll, query, sortby, skip, limit)
 	if ok then

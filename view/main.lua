@@ -66,9 +66,12 @@ local function stats_def()
 	local table = args.table
 	local key_pattern = args.key
 	local tables = get_all_table_info(table)
-
+	local diff = args.diff or true-- get requests diff of pre day and current date
 	local date, prev_day, next_day, today = get_query_date(args)
 
+	if diff == "false" then 
+		diff = false
+	end
 	args.submit = nil
 	args.date = prev_day
 	local prev_uri = ngx.var.uri .. "?" .. ngx.encode_args(args)
@@ -83,12 +86,30 @@ local function stats_def()
 	-- query stats
 	if table and date then
 		local mongo_cfg = stats.mongo_cfg
-		local ok, stats = mongo.get_stats(mongo_cfg, table, date, key_pattern)
+		local ok, stats = mongo.get_stats(mongo_cfg, table, date, key_pattern, 300)
 		if not ok then
 			ngx.log(ngx.ERR, "mongo.get_stats(", table, ",", date, ") failed! err:", tostring(stats))
 			errmsg = "error on query:" .. tostring(stats)
 		else
 			stats_list = stats
+			if diff then 
+				local ok, pre_stats = mongo.get_stats(mongo_cfg, table, prev_day, key_pattern, 400)
+				if ok then 
+					local pre_counts = {}
+					for _, stats in ipairs(pre_stats) do 
+						if stats.key then 
+							pre_counts[stats.key] = stats.count
+						end
+					end
+					for _, stats in ipairs(stats_list) do 
+						local pre_count = 0
+						if stats.key then 
+							pre_count = pre_counts[stats.key] or 0
+						end
+						stats.pre_count = pre_count
+					end
+				end
+			end
 		end
 	end
 	
@@ -96,7 +117,7 @@ local function stats_def()
 					uri=ngx.var.uri, mon=args.mon,
 					table=table, date=date, key=key_pattern,
 					prev_uri=prev_uri, next_uri=next_uri, today_uri=today_uri,
-					errmsg=errmsg}
+					errmsg=errmsg, prev_day=prev_day}
 
 	ngx.log(ngx.INFO, "page_args: ", cjson.encode(page_args))
 	page_args.stats_list = stats_list

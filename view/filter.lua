@@ -145,4 +145,22 @@ function _M.mon_status(stats)
 	end
 end
 
+-- changes percent = abs((count - pre_count)*100 / max(pre_count,1))
+function _M.changes(stats)
+    local count = stats.count or 0
+    local pre_count = math.max(stats.pre_count or 1, 1)
+    local changes = count - pre_count
+    local flag = "="
+    if changes < 0 then 
+        flag = "-"
+        changes = changes * -1
+    elseif changes > 0 then 
+        flag = "+"
+    end
+    local percent = (changes * 100) / pre_count
+    local percent_str = string.format("%s%2.1d%%", flag, percent)
+    return percent_str, percent, flag, changes
+end
+
+
 return _M
