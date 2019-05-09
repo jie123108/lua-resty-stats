@@ -62,7 +62,7 @@ end
 
 local _M = {}
 
-_M._VERSION = '1.00'
+_M._VERSION = '1.0.2'
 
 _M.def_mongo_cfg = { host = "127.0.0.1",port = 27017, dbname = "ngx_stats"}
 
