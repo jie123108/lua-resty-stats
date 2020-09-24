@@ -6,18 +6,19 @@ lua-resty-stats - is a statistical module for nginx base on ngx_lua, Statistical
 Table of Contents
 =================
 
-* [Name](#name)
-* [Synopsis](#synopsis)
-* [Variables](#variables)
-* [Methods](#methods)
-    * [add_def_stats](#add_def_stats)
-    * [add_stats_config](#add_stats_config)
-    * [init](#init)
-    * [log](#log)
-* [Simple Query] (#simple-query)
-* [Simple Demo] (#simple-demo)
-* [Authors](#authors)
-* [Copyright and License](#copyright-and-license)
+- [Name](#name)
+- [Table of Contents](#table-of-contents)
+- [Synopsis](#synopsis)
+- [Variables](#variables)
+- [Methods](#methods)
+  - [add_def_stats](#add_def_stats)
+  - [add_stats_config](#add_stats_config)
+  - [init](#init)
+  - [log](#log)
+- [Simple Query And API](#simple-query-and-api)
+- [Simple Demo](#simple-demo)
+- [Authors](#authors)
+- [Copyright and License](#copyright-and-license)
 
 Synopsis
 ========
@@ -236,9 +237,9 @@ if the `stats_name` is nil, log method will collect all the statistics that have
 
 [Back to TOC](#table-of-contents)
 
-Simple Query
+Simple Query And API
 =======
-lua-resty-stats comes with a simple query page, which can be used in the following steps:
+lua-resty-stats with a simple query page and API interface, which can be used in the following steps:
 * add location configuration to nginx.conf
 
 ```nginx
@@ -252,6 +253,46 @@ location /stats {
 
 ![docs/query-page.png](docs/query-page.png "The Simple Query")
 
+* Access API:
+
+```curl
+# by date
+curl http://127.0.0.1:8020/stats/api?table=stats_uri&date=2020-02-20&limit=100
+# by date, today
+curl http://127.0.0.1:8020/stats/api?table=stats_uri&date=today&limit=10
+
+# by key(The date parameter is ignored.)
+curl http://127.0.0.1:8020/stats/api?table=stats_uri&key=/path/to/uri
+```
+
+* The API response will look something like this:
+
+```json
+{
+    "stats": [
+        {
+            "hour_cnt": {
+                "19": 24
+            },
+            "count": 24,
+            "status": {
+                "200": 24
+            },
+            "total": 24,
+            "req_time": {
+                "19": 13.262,
+                "all": 13.262
+            },
+            "percent": 100,
+            "key": "/path/to/uri",
+            "date": "2020-09-24"
+        }
+    ]
+}
+```
+
+*If you've configured some other fields in your update, this will be different*
+
 Simple Demo
 ========
 [Simple Stats demo](docs/stats_simple_demo.conf "Simple Stats demo")
@@ -262,7 +303,7 @@ You can include it in nginx.conf using the include directive. Such as:
 Authors
 =======
 
-Xiaojie Liu <jie123108@163.com>。
+jie123108 <jie123108@163.com>。
 
 [Back to TOC](#table-of-contents)
 
@@ -271,7 +312,7 @@ Copyright and License
 
 This module is licensed under the BSD license.
 
-Copyright (C) 2015, by Xiaojie Liu <jie123108@163.com>
+Copyright (C) 2020, by jie123108 <jie123108@163.com>
 
 All rights reserved.
 

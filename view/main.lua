@@ -61,6 +61,46 @@ local function get_query_date(args)
 	return date, prev_day, next_day, today
 end
 
+local function stats_api()
+	local args, err = ngx.req.get_uri_args()
+	local table = args.table
+	local key = args.key
+	local limit = tonumber(args.limit) or 300
+	local date = args.date 
+	if date == 'today' then
+		date = string.sub(ngx.localtime(), 1, 10)
+	end
+
+	local stats_list = {}
+	local ok = nil
+	local errmsg = nil
+	local mongo_cfg = stats.mongo_cfg
+	-- query stats
+	if not table then
+		errmsg = "args 'table' missing"
+	elseif key then
+		ok, stats_list = mongo.get_stats_by_key(mongo_cfg, table, key, limit)
+		if not ok then
+			ngx.log(ngx.ERR, "mongo.get_stats_by_key(", table, ",", key, ") failed! err:", tostring(stats_list))
+			errmsg = "error on query:" .. tostring(stats_list)
+			stats_list = {}
+		end
+	else
+		ok, stats_list = mongo.get_stats(mongo_cfg, table, date, nil, limit)
+		if not ok then
+			ngx.log(ngx.ERR, "mongo.get_stats(", table, ",", date, ") failed! err:", tostring(stats_list))
+			errmsg = "error on query:" .. tostring(stats_list)
+			stats_list = {}
+		end
+	end
+	local resp = {
+		errmsg=errmsg,
+		stats=stats_list,
+	}
+	ngx.header["Content-Type"] = "application/json; charset=utf-8"
+	ngx.say(cjson.encode(resp))
+end
+
 local function stats_def()
 	local args, err = ngx.req.get_uri_args()
 	local table = args.table
@@ -139,7 +179,7 @@ local function stats_key()
 		local mongo_cfg = stats.mongo_cfg
 		local ok, stats = mongo.get_stats_by_key(mongo_cfg, table, key)
 		if not ok then
-			ngx.log(ngx.ERR, "mongo.get_stats_by_key failed! err:", tostring(stats))
+			ngx.log(ngx.ERR, "mongo.get_stats_by_key(", table, ",", key, ") failed! err:", tostring(stats))
 			errmsg = "error on query:" .. tostring(stats)
 		else
 			stats_list = stats
@@ -161,6 +201,7 @@ ngx.header["Content-Type"] = 'text/html'
 local uri = ngx.var.uri
 local router = {
 	["/stats"] = stats_def,
+	["/stats/api"] = stats_api,
 	["/stats/key"] = stats_key,
 }
 

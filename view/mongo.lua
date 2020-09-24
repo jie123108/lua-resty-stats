@@ -6,6 +6,7 @@ date: 20151206
 ]]
 
 local mongo = require "resty.mongol"
+local json = require("resty.stats.json")
 
 local function conn_get(mongo_cfg)
 	local conn = mongo:new()
@@ -60,26 +61,10 @@ local function add_percent(stats_list)
 	end
 end
 
--- function mongo_query(coll, selector, page, limit)
---     page = page or 1
---     local offset = (page-1)* limit
-
---     local _, objs, result = coll:query(selector, nil, offset, limit, options)
-
---     if result and result.QueryFailure then
---         if #objs == 1 then
---             return false, objs[1]["$err"]
---         else
---             return false, "unknow-error"
---         end
---     end
---     return true, objs
--- end
-
-function mongo_find(coll, selector, sortby, skip, limit)
+local function mongo_find(coll, selector, sortby, skip, limit)
 	local objs = {}
 	skip = skip or 0
-    local cursor, err = coll:find(selector, nil, limit)
+    local cursor, err = coll:find(selector, {_id=0}, limit)
     if cursor then
     	if skip then
     		cursor:skip(skip)
@@ -102,12 +87,13 @@ function mongo_find(coll, selector, sortby, skip, limit)
     end
 end
 
+
 local function get_stats(mongo_cfg, collname, date, key_pattern, limit)
 	local ok, conn = conn_get(mongo_cfg)
 	if not ok then
 		return ok, conn
 	end
-	ngx.log(ngx.INFO, "-------", collname, ", date:", date)
+	ngx.log(ngx.INFO, "------- collection:", collname, ", date:", date)
 	local stats = {}
 	local dbname = mongo_cfg.dbname or "ngx_stats"
 	local db = conn:new_db_handle(dbname)
@@ -130,19 +116,19 @@ local function get_stats(mongo_cfg, collname, date, key_pattern, limit)
 	return true, stats
 end
 
-local function get_stats_by_key(mongo_cfg, collname, key)
+local function get_stats_by_key(mongo_cfg, collname, key, limit)
 	local ok, conn = conn_get(mongo_cfg)
 	if not ok then
 		return ok, conn
 	end
-	ngx.log(ngx.INFO, "-------", collname, ", key:", key)
+	ngx.log(ngx.INFO, "------- collection:", collname, ", key:", key)
 	local stats = {}
 	local dbname = mongo_cfg.dbname or "ngx_stats"
 	local db = conn:new_db_handle(dbname)
 	local coll = db:get_col(collname)
 	local query = {key=key}
 	local skip = 0
-	local limit = 300
+	limit = limit or 300
 	-- local ok, tmp_stats = mongo_query(coll, query, offset, limit)
 	local sortby = {date=-1}
 	local ok, tmp_stats = mongo_find(coll, query, sortby, skip, limit)
