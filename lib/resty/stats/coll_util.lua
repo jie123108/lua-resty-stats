@@ -22,7 +22,7 @@ function _M.create_coll_index(mongo_cfg, collection, indexes)
 	end
 		
 	local dao = mongo_dao:new(mongo_cfg, collection)
-	local ok, err = nil
+	local ok, err, idx_name = nil
 	for _, index_info in ipairs(indexes) do
 		ngx.log(ngx.INFO, "--- coll: ", tostring(collection), "  index_info: ", json.dumps(index_info))
 		local index_keys = index_info.keys or index_info.index_keys
