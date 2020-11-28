@@ -37,7 +37,7 @@ function _M.create_coll_index(mongo_cfg, collection, indexes)
 				options[k] = v
 			end
 		end
-		ok, err, idx_name = dao:ensure_index(keys,options)
+		ok, err, idx_name = dao:ensure_index(keys,options, collection)
 		if ok then
 			ngx.log(ngx.INFO, "create index [",tostring(idx_name), "] for [", collection, "] success! ")
 		else

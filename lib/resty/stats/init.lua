@@ -21,7 +21,7 @@ local function minute() return string.sub(ngx.localtime(), 15,16) end
 local function second() return string.sub(ngx.localtime(), 18,19) end
 
 local def_vars = {
-    now = ngx.time, 
+    now = ngx.time,
     date = date,
     time = time,
     year = year,
@@ -62,7 +62,7 @@ end
 
 local _M = {}
 
-_M._VERSION = '1.0.2'
+_M._VERSION = '1.0.3'
 
 _M.def_mongo_cfg = { host = "127.0.0.1",port = 27017, dbname = "ngx_stats"}
 

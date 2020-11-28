@@ -120,37 +120,38 @@ function _M:upsert(selector, update)
     --return self.coll:update(selector, update, 1, 0, 0)
 end
 
--- 参数类型及说明，参见：https://docs.mongodb.org/manual/reference/method/db.collection.createIndex/#db.collection.createIndex
-function _M:ensure_index(keys,options, collname)
+-- For parameter types and descriptions, reference：https://docs.mongodb.org/manual/reference/method/db.collection.createIndex/#db.collection.createIndex
+function _M:ensure_index(keys, options, collname)
     local ok, err = self:init()
     if not ok then
         return false, err
     end
 	options = options or {}
-	local ns = self.ns
-	if collname  then
-		ns = self.dbname .. "." .. collname
-	end
-	local doc = t_ordered({"ns",ns})
+
+    local index = t_ordered({})
     local _keys = t_ordered():merge(keys)
-    doc.key = _keys
-    doc.name = options.name or t_concat(_keys,'_')
-    
+    index.key = _keys
+    index.name = options.name or t_concat(_keys,'_')
     for i,v in ipairs({"unique","background", "sparse"}) do
         if options[v] ~= nil then
-            doc[v] = options[v] and true or false
-            --options[v] = nil
+            index[v] = options[v] and true or false
         end
     end
 
-    local sys_idx_coll_name = "system.indexes"
-    local sys_idx_coll = self.db:get_col(sys_idx_coll_name)
+    local doc = t_ordered()
+    -- used $cmd: https://www.bookstack.cn/read/mongodb-4.2-manual/662e17e4e7c25f48.md#dbcmd.createIndexes
+    doc:merge({createIndexes = collname})
+    doc:merge({indexes = {index}})
 
-    local n, err = sys_idx_coll:insert({doc},0, true)
+    local retinfo, errmsg = self.db:cmd(doc)
+
     self:uninit()
-    local ok = (n==0)
-    
-    return ok, err, doc.name
+    local ok = false
+    if retinfo then
+        ok = retinfo.ok == 1
+    end
+
+    return ok, errmsg, index.name
 end
 
 return _M
